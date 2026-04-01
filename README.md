@@ -1,99 +1,110 @@
-# Zewbie — User/Creator Portal
+# Zewbie — User / Creator Portal
 
-React + Vite + TypeScript frontend for the Zewbie e-commerce creator platform.
+**Creator and end-user** experience for building a store, managing products sourced from retailers, orders, payouts, integrations, and analytics. Stack: **React**, **Vite**, **TypeScript**, **TailwindCSS**, **React Router**, **Axios**, **TanStack Query**, **Zustand**.
 
-## Tech Stack
+**Live:** [https://app.zewbie.com](https://app.zewbie.com)
 
-| Layer       | Choice                                    |
-|-------------|-------------------------------------------|
-| Framework   | React 18 + TypeScript                     |
-| Bundler     | Vite                                      |
-| Styling     | TailwindCSS v4 (`@tailwindcss/vite`)      |
-| Routing     | React Router v6 (BrowserRouter)           |
-| State       | Zustand                                   |
-| Data        | TanStack React Query + Axios              |
-| Icons       | Lucide React                              |
+## Quick start
 
-## Project Structure
-
-```
-src/
-├── App.tsx                  # Root router — all routes defined here
-├── index.css                # Tailwind import
-├── main.tsx                 # Entry point
-├── lib/
-│   └── api.ts               # Axios instance (VITE_API_URL)
-├── layouts/
-│   ├── AppLayout.tsx         # Sidebar layout (authenticated pages)
-│   ├── AuthLayout.tsx        # Centered card layout (login/register)
-│   ├── OnboardingLayout.tsx  # Step-wizard layout
-│   └── MarketingLayout.tsx   # Public pages with navbar + footer
-└── pages/
-    ├── Dashboard.tsx
-    ├── ApiTestPanel.tsx
-    ├── marketing/           # Landing, Pricing, Features
-    ├── auth/                # Login, Register, ForgotPassword, ResetPassword, VerifyEmail
-    ├── onboarding/          # Onboarding wizard (5 steps)
-    ├── store/               # StoreEditor, StorePages, Templates, Domain, StoreSettings
-    ├── products/            # ProductCatalog, ProductDetail, MyProducts, MyProductEdit
-    ├── orders/              # OrderList, OrderDetail, OrderStats
-    ├── finances/            # Payouts, PayoutSetup, Revenue
-    ├── integrations/        # IntegrationList, IntegrationConnect
-    ├── analytics/           # AnalyticsOverview, Sales, Traffic, Customer
-    └── account/             # Profile, Settings, Notifications
-```
-
-## Routes
-
-| Route                           | Page               | Layout     |
-|---------------------------------|--------------------|------------|
-| `/`                             | Landing            | Marketing  |
-| `/pricing`                      | Pricing            | Marketing  |
-| `/features`                     | Features           | Marketing  |
-| `/auth/login`                   | Login              | Auth       |
-| `/auth/register`                | Register           | Auth       |
-| `/auth/forgot-password`         | ForgotPassword     | Auth       |
-| `/auth/reset-password/:token`   | ResetPassword      | Auth       |
-| `/auth/verify-email/:token`     | VerifyEmail        | Auth       |
-| `/onboarding`                   | Onboarding         | Onboarding |
-| `/dashboard`                    | Dashboard          | App        |
-| `/store/editor`                 | StoreEditor        | App        |
-| `/store/pages`                  | StorePages         | App        |
-| `/store/pages/:id/edit`         | StorePageEdit      | App        |
-| `/store/templates`              | Templates          | App        |
-| `/store/domain`                 | Domain             | App        |
-| `/store/settings`               | StoreSettings      | App        |
-| `/products/catalog`             | ProductCatalog     | App        |
-| `/products/catalog/:id`         | ProductDetail      | App        |
-| `/products/mine`                | MyProducts         | App        |
-| `/products/mine/:id`            | MyProductEdit      | App        |
-| `/orders`                       | OrderList          | App        |
-| `/orders/stats`                 | OrderStats         | App        |
-| `/orders/:id`                   | OrderDetail        | App        |
-| `/finances/payouts`             | Payouts            | App        |
-| `/finances/payouts/setup`       | PayoutSetup        | App        |
-| `/finances/revenue`             | Revenue            | App        |
-| `/integrations`                 | IntegrationList    | App        |
-| `/integrations/:provider`       | IntegrationConnect | App        |
-| `/analytics`                    | AnalyticsOverview  | App        |
-| `/analytics/sales`              | SalesAnalytics     | App        |
-| `/analytics/traffic`            | TrafficAnalytics   | App        |
-| `/analytics/customers`          | CustomerAnalytics  | App        |
-| `/account/profile`              | Profile            | App        |
-| `/account/settings`             | Settings           | App        |
-| `/account/notifications`        | Notifications      | App        |
-| `/api-test`                     | ApiTestPanel       | App        |
-
-## Getting Started
-
-```bash
-cp .env.example .env
+```powershell
+git clone https://github.com/zewbie/zewbie-app.git
+cd zewbie-app
 npm install
-npm run dev          # http://localhost:5173
+copy .env.example .env
+npm run dev
 ```
 
-## Environment Variables
+Dev server: **`http://localhost:5173`** (`vite.config.ts`).
 
-| Variable       | Description            | Default                  |
-|----------------|------------------------|--------------------------|
-| `VITE_API_URL` | Backend API base URL   | `http://localhost:3000`  |
+## Architecture
+
+| Layout | Use |
+|--------|-----|
+| **`MarketingLayout`** | Public marketing: landing, pricing, features. |
+| **`AuthLayout`** | Login, register, password reset, email verification (`/auth/*`). |
+| **`OnboardingLayout`** | Post-signup onboarding wizard. |
+| **`AppLayout`** | Authenticated creator dashboard (sidebar). |
+| **`lib/api.ts`** | API client with `VITE_API_URL` and auth token handling. |
+
+## Route list (37 pages)
+
+| Route | Page | Layout |
+|-------|------|--------|
+| `/` | Landing | Marketing |
+| `/pricing` | Pricing | Marketing |
+| `/features` | Features | Marketing |
+| `/auth/login` | Login | Auth |
+| `/auth/register` | Register | Auth |
+| `/auth/forgot-password` | Forgot password | Auth |
+| `/auth/reset-password/:token` | Reset password | Auth |
+| `/auth/verify-email/:token` | Verify email | Auth |
+| `/onboarding` | Onboarding | Onboarding |
+| `/dashboard` | Dashboard | App |
+| `/store/editor` | Store editor | App |
+| `/store/pages` | Store pages | App |
+| `/store/pages/:id/edit` | Edit store page | App |
+| `/store/templates` | Templates | App |
+| `/store/domain` | Custom domain | App |
+| `/store/settings` | Store settings | App |
+| `/products/catalog` | Product catalog | App |
+| `/products/catalog/:id` | Catalog product detail | App |
+| `/products/mine` | My products | App |
+| `/products/mine/:id` | Edit my product | App |
+| `/orders` | Orders | App |
+| `/orders/stats` | Order stats | App |
+| `/orders/:id` | Order detail | App |
+| `/finances/payouts` | Payouts | App |
+| `/finances/payouts/setup` | Payout setup | App |
+| `/finances/revenue` | Revenue | App |
+| `/integrations` | Integrations list | App |
+| `/integrations/:provider` | Connect integration | App |
+| `/analytics` | Analytics overview | App |
+| `/analytics/sales` | Sales analytics | App |
+| `/analytics/traffic` | Traffic analytics | App |
+| `/analytics/customers` | Customer analytics | App |
+| `/account/profile` | Profile | App |
+| `/account/settings` | Settings | App |
+| `/account/notifications` | Notifications | App |
+| `/api-test` | API test panel | App |
+| `*` | Unknown paths → `/` | — |
+
+## Environment variables
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `VITE_API_URL` | Zewbie Universal API base URL | `http://localhost:3000` |
+
+## Project structure
+
+```text
+src/
+├── App.tsx
+├── main.tsx
+├── lib/api.ts
+├── layouts/
+│   ├── MarketingLayout.tsx
+│   ├── AuthLayout.tsx
+│   ├── OnboardingLayout.tsx
+│   └── AppLayout.tsx
+└── pages/
+    ├── marketing/
+    ├── auth/
+    ├── onboarding/
+    ├── store/
+    ├── products/
+    ├── orders/
+    ├── finances/
+    ├── integrations/
+    ├── analytics/
+    └── account/
+```
+
+## Related repositories
+
+- **zewbie-api** — Backend.
+- **zewbie-admin**, **zewbie-retailer** — Admin and retailer UIs.
+- **zewbie-infra** — Docker + Terraform.
+
+## License
+
+Private (see repository settings).
