@@ -7,7 +7,7 @@
 ## Quick start
 
 ```powershell
-git clone https://github.com/zewbie/zewbie-app.git
+git clone <repository-url>
 cd zewbie-app
 npm install
 copy .env.example .env
