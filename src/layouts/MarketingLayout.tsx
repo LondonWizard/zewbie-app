@@ -1,7 +1,11 @@
+import { useState } from 'react'
 import { Outlet, Link } from 'react-router-dom'
+import { Menu, X } from 'lucide-react'
 
-/** Public marketing layout with top navbar and footer. */
+/** Public marketing layout with responsive top navbar and footer. */
 export default function MarketingLayout() {
+  const [menuOpen, setMenuOpen] = useState(false)
+
   return (
     <div className="min-h-screen flex flex-col bg-white">
       <header className="border-b border-gray-200">
@@ -9,17 +13,16 @@ export default function MarketingLayout() {
           <Link to="/" className="text-xl font-bold text-indigo-600">
             Zewbie
           </Link>
-          <nav className="flex items-center gap-6">
+
+          {/* Desktop nav */}
+          <nav className="hidden md:flex items-center gap-6">
             <Link to="/features" className="text-sm text-gray-600 hover:text-gray-900">
               Features
             </Link>
             <Link to="/pricing" className="text-sm text-gray-600 hover:text-gray-900">
               Pricing
             </Link>
-            <Link
-              to="/auth/login"
-              className="text-sm text-gray-600 hover:text-gray-900"
-            >
+            <Link to="/auth/login" className="text-sm text-gray-600 hover:text-gray-900">
               Log In
             </Link>
             <Link
@@ -29,7 +32,38 @@ export default function MarketingLayout() {
               Get Started
             </Link>
           </nav>
+
+          {/* Mobile hamburger */}
+          <button
+            className="md:hidden p-1 rounded hover:bg-gray-100"
+            onClick={() => setMenuOpen(!menuOpen)}
+            aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+          >
+            {menuOpen ? <X size={22} /> : <Menu size={22} />}
+          </button>
         </div>
+
+        {/* Mobile dropdown */}
+        {menuOpen && (
+          <nav className="md:hidden border-t border-gray-100 px-4 py-3 flex flex-col gap-3">
+            <Link to="/features" onClick={() => setMenuOpen(false)} className="text-sm text-gray-600 hover:text-gray-900">
+              Features
+            </Link>
+            <Link to="/pricing" onClick={() => setMenuOpen(false)} className="text-sm text-gray-600 hover:text-gray-900">
+              Pricing
+            </Link>
+            <Link to="/auth/login" onClick={() => setMenuOpen(false)} className="text-sm text-gray-600 hover:text-gray-900">
+              Log In
+            </Link>
+            <Link
+              to="/auth/register"
+              onClick={() => setMenuOpen(false)}
+              className="text-sm bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 text-center"
+            >
+              Get Started
+            </Link>
+          </nav>
+        )}
       </header>
 
       <main className="flex-1">
