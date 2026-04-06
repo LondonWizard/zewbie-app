@@ -18,9 +18,12 @@ import { ButtonSettings } from './settings/ButtonSettings'
 import { ContainerSettings } from './settings/ContainerSettings'
 import { HeroSettings } from './settings/HeroSettings'
 import { ProductGridSettings } from './settings/ProductGridSettings'
+import { DividerSettings } from './settings/DividerSettings'
+import { VideoSettings } from './settings/VideoSettings'
+import { ColumnsSettings } from './settings/ColumnsSettings'
 import { useAutoSave } from './hooks/useAutoSave'
 import { useVersionHistory } from './hooks/useVersionHistory'
-import { History } from 'lucide-react'
+import { History, AlertCircle, CheckCircle2 } from 'lucide-react'
 import api from '../lib/api'
 
 TextBlock.craft = { ...TextBlock.craft, related: { settings: TextSettings } }
@@ -29,6 +32,9 @@ ButtonBlock.craft = { ...ButtonBlock.craft, related: { settings: ButtonSettings 
 Container.craft = { ...Container.craft, related: { settings: ContainerSettings } }
 HeroBlock.craft = { ...HeroBlock.craft, related: { settings: HeroSettings } }
 ProductGridBlock.craft = { ...ProductGridBlock.craft, related: { settings: ProductGridSettings } }
+DividerBlock.craft = { ...DividerBlock.craft, related: { settings: DividerSettings } }
+VideoBlock.craft = { ...VideoBlock.craft, related: { settings: VideoSettings } }
+ColumnsBlock.craft = { ...ColumnsBlock.craft, related: { settings: ColumnsSettings } }
 
 const RESOLVER = {
   Container,
@@ -68,7 +74,7 @@ function SaveListener({ onJsonChange }: { onJsonChange: (json: string) => void }
       } catch {
         // editor not ready yet
       }
-    }, 1000)
+    }, 2000)
     return () => clearInterval(interval)
   }, [query, onJsonChange])
 
@@ -87,11 +93,19 @@ export function StoreBuilder({
   const [editorJson, setEditorJson] = useState<string | null>(null)
   const [showHistory, setShowHistory] = useState(false)
   const [sideTab, setSideTab] = useState<'blocks' | 'settings'>('blocks')
+  const [saveError, setSaveError] = useState<string | null>(null)
 
-  const { versions, loading: versionsLoading, fetchVersions } = useVersionHistory(storeId, pageId)
+  const { versions, loading: versionsLoading, fetchVersions, restoreVersion } = useVersionHistory(storeId, pageId)
 
   const handleSave = useCallback(async (data: string) => {
-    await api.put(`/stores/${storeId}/pages/${pageId}`, { content: JSON.parse(data) })
+    setSaveError(null)
+    try {
+      await api.put(`/stores/${storeId}/pages/${pageId}`, { content: JSON.parse(data) })
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Save failed'
+      setSaveError(msg)
+      throw err
+    }
   }, [storeId, pageId])
 
   const { isSaving, lastSaved, manualSave } = useAutoSave({
@@ -108,6 +122,13 @@ export function StoreBuilder({
     setEditorJson(json)
   }, [])
 
+  const handleRestoreVersion = useCallback(async (versionId: string) => {
+    const content = await restoreVersion(versionId)
+    if (content) {
+      window.location.reload()
+    }
+  }, [restoreVersion])
+
   return (
     <Editor resolver={RESOLVER} enabled>
       <div className="flex flex-col h-screen bg-gray-100">
@@ -121,6 +142,21 @@ export function StoreBuilder({
           viewport={viewport}
           onViewportChange={setViewport}
         />
+
+        {/* Save status banner */}
+        {saveError && (
+          <div className="flex items-center gap-2 px-4 py-2 bg-red-50 border-b border-red-200 text-red-700 text-xs">
+            <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+            <span>Save failed: {saveError}</span>
+            <button onClick={manualSave} className="ml-auto underline hover:no-underline">Retry</button>
+          </div>
+        )}
+        {lastSaved && !saveError && (
+          <div className="flex items-center gap-2 px-4 py-1 bg-green-50 border-b border-green-200 text-green-700 text-xs">
+            <CheckCircle2 className="w-3 h-3" />
+            <span>Last saved at {lastSaved}</span>
+          </div>
+        )}
 
         <div className="flex flex-1 overflow-hidden">
           {/* Left sidebar: blocks + settings */}
@@ -171,6 +207,7 @@ export function StoreBuilder({
               }}
               className="w-10 h-10 flex items-center justify-center hover:bg-gray-50"
               title="Version History"
+              aria-label="Toggle version history"
             >
               <History className="w-4 h-4" />
             </button>
@@ -182,12 +219,13 @@ export function StoreBuilder({
                 {versionsLoading ? (
                   <p className="text-xs text-gray-400">Loading...</p>
                 ) : versions.length === 0 ? (
-                  <p className="text-xs text-gray-400">No versions yet. Save your page to create the first version.</p>
+                  <p className="text-xs text-gray-400">No versions yet. Publish your store to create a snapshot.</p>
                 ) : (
                   <div className="space-y-2">
                     {versions.map((v) => (
                       <button
                         key={v.id}
+                        onClick={() => handleRestoreVersion(v.id)}
                         className="w-full text-left p-2 rounded border border-gray-200 hover:bg-blue-50 text-xs"
                       >
                         <span className="font-medium">v{v.version}</span>

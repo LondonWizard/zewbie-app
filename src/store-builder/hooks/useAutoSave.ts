@@ -10,6 +10,7 @@ interface AutoSaveOptions {
 /**
  * Auto-saves editor content after a debounce period.
  * Tracks the last-saved timestamp and saving state.
+ * Re-throws save errors so callers can display feedback.
  */
 export function useAutoSave({ data, onSave, debounceMs = 3000, enabled = true }: AutoSaveOptions) {
   const [isSaving, setIsSaving] = useState(false)
@@ -23,8 +24,6 @@ export function useAutoSave({ data, onSave, debounceMs = 3000, enabled = true }:
       await onSave(content)
       setLastSaved(new Date().toLocaleTimeString())
       lastDataRef.current = content
-    } catch {
-      // silently fail; user can manually retry
     } finally {
       setIsSaving(false)
     }

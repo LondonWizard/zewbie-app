@@ -1,4 +1,4 @@
-import { memo } from 'react'
+import { memo, useMemo } from 'react'
 import { useNode, Element } from '@craftjs/core'
 import { Container } from './Container'
 import type { ReactNode } from 'react'
@@ -15,15 +15,21 @@ export const ColumnsBlock = memo(function ColumnsBlock({ columns = 2, gap = 16 }
     isActive: node.events.selected,
   }))
 
+  const columnElements = useMemo(
+    () =>
+      Array.from({ length: columns }, (_, i) => (
+        <Element key={`column-${i}`} id={`column-${i}`} canvas is={Container} background="#fafafa" padding={12} />
+      )),
+    [columns],
+  )
+
   return (
     <div
       ref={(ref) => { if (ref) connect(drag(ref)) }}
       className={`cursor-move ${isActive ? 'ring-2 ring-blue-500 ring-offset-1' : ''}`}
       style={{ display: 'grid', gridTemplateColumns: `repeat(${columns}, 1fr)`, gap }}
     >
-      {Array.from({ length: columns }, (_, i) => (
-        <Element key={i} id={`column-${i}`} canvas is={Container} background="#fafafa" padding={12} />
-      ))}
+      {columnElements}
     </div>
   )
 })
