@@ -1,8 +1,16 @@
 import axios from 'axios'
 
-/** Axios instance pre-configured with the backend base URL from env. */
+/**
+ * Axios instance for the Zewbie API.
+ * Ensures the base URL always ends with /v1 to match the API's global prefix.
+ */
+function resolveBaseUrl(): string {
+  const raw = import.meta.env.VITE_API_URL ?? 'http://localhost:3000/v1'
+  return raw.endsWith('/v1') ? raw : `${raw.replace(/\/+$/, '')}/v1`
+}
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL ?? 'http://localhost:3000/v1',
+  baseURL: resolveBaseUrl(),
   headers: { 'Content-Type': 'application/json' },
 })
 
