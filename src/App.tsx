@@ -1,6 +1,8 @@
-import { lazy, Suspense } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { ClerkProvider, useAuth as useClerkAuth, SignedIn, SignedOut, RedirectToSignIn } from '@clerk/clerk-react'
 import { AuthProvider } from './lib/auth'
+import { setClerkTokenGetter } from './lib/api'
 import { ToastProvider } from './components/Toast'
 import { ErrorBoundary } from './components/ErrorBoundary'
 
@@ -57,6 +59,8 @@ const Notifications = lazy(() => import('./pages/account/Notifications'))
 
 const ApiTestPanel = lazy(() => import('./pages/ApiTestPanel'))
 
+const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
+
 function LoadingFallback() {
   return (
     <div className="flex items-center justify-center h-screen">
@@ -65,97 +69,121 @@ function LoadingFallback() {
   )
 }
 
-/** Redirects unauthenticated users to the login page. */
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const token = localStorage.getItem('access_token')
-  if (!token) return <Navigate to="/auth/login" replace />
+/** Wires Clerk's getToken into the axios interceptor once auth is loaded. */
+function ClerkTokenBridge({ children }: { children: React.ReactNode }) {
+  const { getToken } = useClerkAuth()
+  useEffect(() => {
+    setClerkTokenGetter(() => getToken())
+  }, [getToken])
   return <>{children}</>
+}
+
+/** Redirects unauthenticated users to the Clerk sign-in page. */
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  return (
+    <>
+      <SignedIn>{children}</SignedIn>
+      <SignedOut><RedirectToSignIn /></SignedOut>
+    </>
+  )
 }
 
 /** Root application component — defines all routes grouped by layout. */
 export default function App() {
+  if (!CLERK_PUBLISHABLE_KEY) {
+    return (
+      <div className="flex items-center justify-center h-screen text-red-600">
+        Missing VITE_CLERK_PUBLISHABLE_KEY environment variable
+      </div>
+    )
+  }
+
   return (
-    <AuthProvider>
-      <ToastProvider>
-        <BrowserRouter>
-          <Suspense fallback={<LoadingFallback />}>
-            <Routes>
-              {/* Marketing / Public */}
-              <Route element={<ErrorBoundary><MarketingLayout /></ErrorBoundary>}>
-                <Route path="/" element={<Landing />} />
-                <Route path="/pricing" element={<Pricing />} />
-                <Route path="/features" element={<Features />} />
-              </Route>
+    <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY}>
+      <ClerkTokenBridge>
+        <AuthProvider>
+          <ToastProvider>
+            <BrowserRouter>
+              <Suspense fallback={<LoadingFallback />}>
+                <Routes>
+                  {/* Marketing / Public */}
+                  <Route element={<ErrorBoundary><MarketingLayout /></ErrorBoundary>}>
+                    <Route path="/" element={<Landing />} />
+                    <Route path="/pricing" element={<Pricing />} />
+                    <Route path="/features" element={<Features />} />
+                  </Route>
 
-              {/* Auth */}
-              <Route path="/auth" element={<ErrorBoundary><AuthLayout /></ErrorBoundary>}>
-                <Route path="login" element={<Login />} />
-                <Route path="register" element={<Register />} />
-                <Route path="forgot-password" element={<ForgotPassword />} />
-                <Route path="reset-password/:token" element={<ResetPassword />} />
-                <Route path="verify-email/:token" element={<VerifyEmail />} />
-              </Route>
+                  {/* Auth */}
+                  <Route path="/auth" element={<ErrorBoundary><AuthLayout /></ErrorBoundary>}>
+                    <Route path="login" element={<Login />} />
+                    <Route path="register" element={<Register />} />
+                    <Route path="forgot-password" element={<ForgotPassword />} />
+                    <Route path="reset-password/:token" element={<ResetPassword />} />
+                    <Route path="verify-email/:token" element={<VerifyEmail />} />
+                  </Route>
 
-              {/* Onboarding */}
-              <Route element={<ErrorBoundary><OnboardingLayout /></ErrorBoundary>}>
-                <Route path="/onboarding" element={<Onboarding />} />
-              </Route>
+                  {/* Onboarding */}
+                  <Route element={<ErrorBoundary><OnboardingLayout /></ErrorBoundary>}>
+                    <Route path="/onboarding" element={<Onboarding />} />
+                  </Route>
 
-              {/* App (authenticated) */}
-              <Route element={<ProtectedRoute><ErrorBoundary><AppLayout /></ErrorBoundary></ProtectedRoute>}>
-                <Route path="/dashboard" element={<Dashboard />} />
+                  {/* App (authenticated) */}
+                  <Route element={<ProtectedRoute><ErrorBoundary><AppLayout /></ErrorBoundary></ProtectedRoute>}>
+                    <Route path="/dashboard" element={<Dashboard />} />
 
-                {/* Store Builder */}
-                <Route path="/store/editor" element={<StoreEditor />} />
-                <Route path="/store/pages" element={<StorePages />} />
-                <Route path="/store/pages/:id/edit" element={<StorePageEdit />} />
-                <Route path="/store/templates" element={<Templates />} />
-                <Route path="/store/domain" element={<Domain />} />
-                <Route path="/store/settings" element={<StoreSettings />} />
+                    {/* Store Builder */}
+                    <Route path="/store/editor" element={<StoreEditor />} />
+                    <Route path="/store/pages" element={<StorePages />} />
+                    <Route path="/store/pages/:id/edit" element={<StorePageEdit />} />
+                    <Route path="/store/templates" element={<Templates />} />
+                    <Route path="/store/domain" element={<Domain />} />
+                    <Route path="/store/settings" element={<StoreSettings />} />
 
-                {/* Products */}
-                <Route path="/products/catalog" element={<ProductCatalog />} />
-                <Route path="/products/catalog/:id" element={<ProductDetail />} />
-                <Route path="/products/mine" element={<MyProducts />} />
-                <Route path="/products/mine/:id" element={<MyProductEdit />} />
+                    {/* Products */}
+                    <Route path="/products/catalog" element={<ProductCatalog />} />
+                    <Route path="/products/catalog/:id" element={<ProductDetail />} />
+                    <Route path="/products/mine" element={<MyProducts />} />
+                    <Route path="/products/mine/:id" element={<MyProductEdit />} />
 
-                {/* Orders */}
-                <Route path="/orders" element={<OrderList />} />
-                <Route path="/orders/stats" element={<OrderStats />} />
-                <Route path="/orders/:id" element={<OrderDetail />} />
+                    {/* Orders */}
+                    <Route path="/orders" element={<OrderList />} />
+                    <Route path="/orders/stats" element={<OrderStats />} />
+                    <Route path="/orders/:id" element={<OrderDetail />} />
 
-                {/* Finances */}
-                <Route path="/finances/payouts" element={<Payouts />} />
-                <Route path="/finances/payouts/setup" element={<PayoutSetup />} />
-                <Route path="/finances/revenue" element={<Revenue />} />
+                    {/* Finances */}
+                    <Route path="/finances/payouts" element={<Payouts />} />
+                    <Route path="/finances/payouts/setup" element={<PayoutSetup />} />
+                    <Route path="/finances/revenue" element={<Revenue />} />
 
-                {/* Integrations */}
-                <Route path="/integrations" element={<IntegrationList />} />
-                <Route path="/integrations/:provider" element={<IntegrationConnect />} />
+                    {/* Integrations */}
+                    <Route path="/integrations" element={<IntegrationList />} />
+                    <Route path="/integrations/:provider" element={<IntegrationConnect />} />
 
-                {/* Analytics */}
-                <Route path="/analytics" element={<AnalyticsOverview />} />
-                <Route path="/analytics/sales" element={<SalesAnalytics />} />
-                <Route path="/analytics/traffic" element={<TrafficAnalytics />} />
-                <Route path="/analytics/customers" element={<CustomerAnalytics />} />
+                    {/* Analytics */}
+                    <Route path="/analytics" element={<AnalyticsOverview />} />
+                    <Route path="/analytics/sales" element={<SalesAnalytics />} />
+                    <Route path="/analytics/traffic" element={<TrafficAnalytics />} />
+                    <Route path="/analytics/customers" element={<CustomerAnalytics />} />
 
-                {/* Account */}
-                <Route path="/account/profile" element={<Profile />} />
-                <Route path="/account/settings" element={<Settings />} />
-                <Route path="/account/notifications" element={<Notifications />} />
+                    {/* Account */}
+                    <Route path="/account/profile" element={<Profile />} />
+                    <Route path="/account/settings" element={<Settings />} />
+                    <Route path="/account/notifications" element={<Notifications />} />
 
-                {/* Developer — only available in dev builds */}
-                {import.meta.env.DEV && (
-                  <Route path="/api-test" element={<ApiTestPanel />} />
-                )}
-              </Route>
+                    {/* Developer — only available in dev builds */}
+                    {import.meta.env.DEV && (
+                      <Route path="/api-test" element={<ApiTestPanel />} />
+                    )}
+                  </Route>
 
-              {/* Fallback */}
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </Suspense>
-        </BrowserRouter>
-      </ToastProvider>
-    </AuthProvider>
+                  {/* Fallback */}
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+              </Suspense>
+            </BrowserRouter>
+          </ToastProvider>
+        </AuthProvider>
+      </ClerkTokenBridge>
+    </ClerkProvider>
   )
 }

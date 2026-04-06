@@ -10,6 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@clerk/clerk-react": "^5.61.4",
     "@craftjs/core": "^0.2.12",
     "@craftjs/layers": "^0.2.7",
     "@craftjs/utils": "^0.2.5",

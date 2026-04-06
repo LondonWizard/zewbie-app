@@ -14,10 +14,26 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 })
 
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('access_token')
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`
+/**
+ * Holds a reference to the Clerk getToken function.
+ * Set by the App component once Clerk is loaded.
+ */
+let clerkGetToken: (() => Promise<string | null>) | null = null
+
+export function setClerkTokenGetter(getter: () => Promise<string | null>) {
+  clerkGetToken = getter
+}
+
+api.interceptors.request.use(async (config) => {
+  if (clerkGetToken) {
+    try {
+      const token = await clerkGetToken()
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`
+      }
+    } catch {
+      // Clerk not ready or user signed out
+    }
   }
   return config
 })
@@ -26,8 +42,6 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('access_token')
-      localStorage.removeItem('auth_user')
       window.location.href = '/auth/login'
     }
     return Promise.reject(error)

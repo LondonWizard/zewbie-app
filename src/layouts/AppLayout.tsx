@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
+import { UserButton } from '@clerk/clerk-react'
 import {
   LayoutDashboard,
   Store,
@@ -131,13 +132,16 @@ export default function AppLayout() {
             <h1 className="text-xl font-bold text-indigo-600">Zewbie</h1>
             <p className="text-xs text-gray-400">Creator Portal</p>
           </div>
-          <button
-            className="md:hidden p-1 rounded hover:bg-gray-100"
-            onClick={() => setSidebarOpen(false)}
-            aria-label="Close sidebar"
-          >
-            <X size={20} className="text-gray-500" />
-          </button>
+          <div className="flex items-center gap-2">
+            <UserButton afterSignOutUrl="/" />
+            <button
+              className="md:hidden p-1 rounded hover:bg-gray-100"
+              onClick={() => setSidebarOpen(false)}
+              aria-label="Close sidebar"
+            >
+              <X size={20} className="text-gray-500" />
+            </button>
+          </div>
         </div>
         <nav className="p-2">
           {NAV_SECTIONS.map((section) => (
